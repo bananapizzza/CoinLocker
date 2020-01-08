@@ -1,9 +1,6 @@
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 @Getter
 public class CoinLockerSystem {
@@ -11,13 +8,13 @@ public class CoinLockerSystem {
     private List<Locker> smallLockers;
     private List<Locker> mediumLockers;
     private List<Locker> largeLockers;
-    private List<Locker> usingLockers;
+    private Map<Integer, Locker> usingLockers;
 
     CoinLockerSystem() {
         smallLockers = new LinkedList<>();
         mediumLockers = new LinkedList<>();
         largeLockers = new LinkedList<>();
-        usingLockers = new LinkedList<>();
+        usingLockers = new HashMap<>();
     }
 
     CoinLockerSystem(int numOfSmall, int numOfMedium, int numOfLarge) {
@@ -137,23 +134,23 @@ public class CoinLockerSystem {
                 if (smallLockers.size() > 0) {
                     locker = smallLockers.get(0);
                     smallLockers.remove(locker);
-                    usingLockers.add(locker);
-                    return locker;
                 }
+                break;
             case MEDIUM:
                 if (mediumLockers.size() > 0) {
                     locker = mediumLockers.get(0);
                     mediumLockers.remove(locker);
-                    usingLockers.add(locker);
-                    return locker;
                 }
+                break;
             case LARGE:
                 if (largeLockers.size() > 0) {
                     locker = largeLockers.get(0);
                     largeLockers.remove(locker);
-                    usingLockers.add(locker);
-                    return locker;
                 }
+                break;
+        }
+        if(locker != null){
+            usingLockers.put(locker.getId(), locker);
         }
         return locker;
     }
