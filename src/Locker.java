@@ -13,4 +13,5 @@ public class Locker {
     private int size;
     @NonNull
     private int price;
+    private String password;
 }

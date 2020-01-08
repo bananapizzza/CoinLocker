@@ -1,21 +1,19 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class CoinLockerSystemTest {
     CoinLockerSystem cl;
 
     @BeforeEach
-    public void initialize(){
+    public void initialize() {
         cl = new CoinLockerSystem(1, 1, 1);
     }
 
     @Test
-    public void test_addLockers(){
+    public void test_addLockers() {
         cl.addSmallLockers(1);
         cl.addMediumLockers(2);
         cl.addLargeLockers(3);
@@ -26,7 +24,7 @@ class CoinLockerSystemTest {
     }
 
     @Test
-    public void test_rentLocker(){
+    public void test_rentLocker() {
         Locker locker = cl.rentLocker(LockerSize.SMALL);
         assertNotEquals(null, locker);
         assertEquals("SmallLocker", locker.getClass().getName());
