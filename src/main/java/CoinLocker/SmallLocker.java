@@ -1,3 +1,5 @@
+package CoinLocker;
+
 import lombok.Getter;
 
 @Getter
