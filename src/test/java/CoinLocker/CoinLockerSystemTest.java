@@ -39,56 +39,40 @@ public class CoinLockerSystemTest {
     }
 
     @Test
-    void test_getAvailableLocker() {
-        try {
-            Locker locker = coinLockerSystem.getAvailableLocker(LockerSize.SMALL);
-            Assertions.assertNotNull(locker);
-            Assertions.assertEquals("CoinLocker.SmallLocker", locker.getClass().getName());
+    void test_getAvailableLocker() throws InvalidLockerSizeException, NoAvailableLockerException {
+        Locker locker = coinLockerSystem.getAvailableLocker(LockerSize.SMALL);
+        Assertions.assertNotNull(locker);
+        Assertions.assertEquals("CoinLocker.SmallLocker", locker.getClass().getName());
 
-            locker = coinLockerSystem.getAvailableLocker(LockerSize.MEDIUM);
-            Assertions.assertNotNull(locker);
-            Assertions.assertEquals("CoinLocker.MediumLocker", locker.getClass().getName());
+        locker = coinLockerSystem.getAvailableLocker(LockerSize.MEDIUM);
+        Assertions.assertNotNull(locker);
+        Assertions.assertEquals("CoinLocker.MediumLocker", locker.getClass().getName());
 
-            locker = coinLockerSystem.getAvailableLocker(LockerSize.LARGE);
-            Assertions.assertNotNull(locker);
-            Assertions.assertEquals("CoinLocker.LargeLocker", locker.getClass().getName());
-        } catch (InvalidLockerSizeException e) {
-            e.printStackTrace();
-        } catch (NoAvailableLockerException e) {
-            e.printStackTrace();
-        }
+        locker = coinLockerSystem.getAvailableLocker(LockerSize.LARGE);
+        Assertions.assertNotNull(locker);
+        Assertions.assertEquals("CoinLocker.LargeLocker", locker.getClass().getName());
     }
 
     @Test
-    void test_getLockerSize() {
-        try {
-            doReturn(coinLockerSystem.SMALL_LOCKER).when(getUserInputForTest).getInt();
-            Assertions.assertEquals(LockerSize.SMALL, coinLockerSystem.getLockerSize());
+    void test_getLockerSize() throws CancelRentingLockerException, InvalidInputTypeException {
+        doReturn(coinLockerSystem.SMALL_LOCKER).when(getUserInputForTest).getInt();
+        Assertions.assertEquals(LockerSize.SMALL, coinLockerSystem.getLockerSize());
 
-            doReturn(coinLockerSystem.MEDIUM_LOCKER).when(getUserInputForTest).getInt();
-            Assertions.assertEquals(LockerSize.MEDIUM, coinLockerSystem.getLockerSize());
+        doReturn(coinLockerSystem.MEDIUM_LOCKER).when(getUserInputForTest).getInt();
+        Assertions.assertEquals(LockerSize.MEDIUM, coinLockerSystem.getLockerSize());
 
-            doReturn(coinLockerSystem.LARGE_LOCKER).when(getUserInputForTest).getInt();
-            Assertions.assertEquals(LockerSize.LARGE, coinLockerSystem.getLockerSize());
-        } catch (InvalidInputTypeException e) {
-            e.printStackTrace();
-        } catch (CancelRentingLockerException e) {
-            e.printStackTrace();
-        }
+        doReturn(coinLockerSystem.LARGE_LOCKER).when(getUserInputForTest).getInt();
+        Assertions.assertEquals(LockerSize.LARGE, coinLockerSystem.getLockerSize());
     }
 
     @Test
-    void test_getMoney() {
-        try {
-            int desiredPrice = 3;
-            doReturn("5").when(getUserInputForTest).getString();
-            coinLockerSystem.getMoney(desiredPrice);
+    void test_getMoney() throws CancelRentingLockerException {
+        int desiredPrice = 3;
+        doReturn("5").when(getUserInputForTest).getString();
+        coinLockerSystem.getMoney(desiredPrice);
 
-            doReturn("#").when(getUserInputForTest).getString();
-            Assertions.assertThrows(CancelRentingLockerException.class, () -> coinLockerSystem.getMoney(desiredPrice));
-        } catch (CancelRentingLockerException e) {
-            e.printStackTrace();
-        }
+        doReturn("#").when(getUserInputForTest).getString();
+        Assertions.assertThrows(CancelRentingLockerException.class, () -> coinLockerSystem.getMoney(desiredPrice));
     }
 
     @Test
@@ -120,42 +104,40 @@ public class CoinLockerSystemTest {
     }
 
     @Test
-    void test_rentLocker() {
-        try {
-            doReturn(coinLockerSystem.SMALL_LOCKER).when(getUserInputForTest).getInt();
-            doReturn("5", "1234").when(getUserInputForTest).getString();
-            Locker locker = coinLockerSystem.rentLocker();
-            Assertions.assertNotEquals(null, locker);
-            Assertions.assertEquals("CoinLocker.SmallLocker", locker.getClass().getName());
+    void test_rentLocker() throws InvalidInputTypeException {
+        doReturn(coinLockerSystem.SMALL_LOCKER).when(getUserInputForTest).getInt();
+        doReturn("5", "1234").when(getUserInputForTest).getString();
+        Locker locker = coinLockerSystem.rentLocker();
+        Assertions.assertNotEquals(null, locker);
+        Assertions.assertEquals("CoinLocker.SmallLocker", locker.getClass().getName());
 
-            locker = coinLockerSystem.rentLocker();
-            Assertions.assertNotEquals(null, locker);
-            Assertions.assertEquals("CoinLocker.MediumLocker", locker.getClass().getName());
+        locker = coinLockerSystem.rentLocker();
+        Assertions.assertNotEquals(null, locker);
+        Assertions.assertEquals("CoinLocker.MediumLocker", locker.getClass().getName());
 
-            locker = coinLockerSystem.rentLocker();
-            Assertions.assertNotEquals(null, locker);
-            Assertions.assertEquals("CoinLocker.LargeLocker", locker.getClass().getName());
+        locker = coinLockerSystem.rentLocker();
+        Assertions.assertNotEquals(null, locker);
+        Assertions.assertEquals("CoinLocker.LargeLocker", locker.getClass().getName());
 
-            Assertions.assertThrows(NoAvailableLockerException.class, () -> coinLockerSystem.getAvailableLocker(LockerSize.SMALL));
-        } catch (InvalidInputTypeException e) {
-            e.printStackTrace();
-        }
+        Assertions.assertThrows(NoAvailableLockerException.class, () -> coinLockerSystem.getAvailableLocker(LockerSize.SMALL));
     }
 
     @Test
-    void test_getLockerNumber() {
-        try {
-            Locker locker = new SmallLocker(100);
-            coinLockerSystem.getLockersInUse().put(locker.getId(), locker);
+    void test_getLockerNumber() throws CancelOpeningLockerException {
+        Locker locker = new SmallLocker(100);
+        coinLockerSystem.getLockersInUse().put(locker.getId(), locker);
 
-            doReturn(String.valueOf(locker.getId())).when(getUserInputForTest).getString();
-            Assertions.assertEquals(locker.getId(), coinLockerSystem.getLockerNumber());
+        doReturn(String.valueOf(locker.getId())).when(getUserInputForTest).getString();
+        Assertions.assertEquals(locker.getId(), coinLockerSystem.getLockerNumber());
 
-            doReturn("#").when(getUserInputForTest).getString();
-            Assertions.assertThrows(CancelOpeningLockerException.class, () -> coinLockerSystem.getLockerNumber());
-        } catch (CancelOpeningLockerException e) {
-            e.printStackTrace();
-        }
+        locker = new SmallLocker(101);
+        coinLockerSystem.getTemporarilyLockedLockers().put(locker.getId(), locker);
+
+        doReturn(String.valueOf(locker.getId())).when(getUserInputForTest).getString();
+        Assertions.assertThrows(CancelOpeningLockerException.class, () -> coinLockerSystem.getLockerNumber());
+
+        doReturn("#").when(getUserInputForTest).getString();
+        Assertions.assertThrows(CancelOpeningLockerException.class, () -> coinLockerSystem.getLockerNumber());
     }
 
     @Test
@@ -168,19 +150,35 @@ public class CoinLockerSystemTest {
     }
 
     @Test
-    void test_checkPassword() {
-        try {
-            Locker locker = new SmallLocker(100);
-            locker.setPassword("1234");
+    void test_checkPassword() throws InvalidPasswordLimitReachedException {
+        Locker locker = new SmallLocker(100);
+        locker.setPassword("1234");
 
-            doReturn("1234").when(getUserInputForTest).getString();
-            coinLockerSystem.checkPassword(locker);
+        doReturn("1234").when(getUserInputForTest).getString();
+        coinLockerSystem.checkPassword(locker);
 
-            doReturn("1111").when(getUserInputForTest).getString();
-            Assertions.assertThrows(InvalidPasswordLimitReachedException.class, () -> coinLockerSystem.checkPassword(locker));
-        } catch (InvalidPasswordLimitReachedException e) {
-            e.printStackTrace();
-        }
+        doReturn("1111").when(getUserInputForTest).getString();
+        Assertions.assertThrows(InvalidPasswordLimitReachedException.class, () -> coinLockerSystem.checkPassword(locker));
+    }
+
+    @Test
+    void test_moveLockerToLockedList(){
+        Locker locker = new SmallLocker(100);
+        coinLockerSystem.getLockersInUse().put(locker.getId(), locker);
+
+        coinLockerSystem.moveLockerToLockedList(locker);
+        Assertions.assertEquals(locker, coinLockerSystem.getTemporarilyLockedLockers().get(locker.getId()));
+        Assertions.assertEquals(1, coinLockerSystem.getTemporarilyLockedLockers().size());
+        Assertions.assertEquals(0, coinLockerSystem.getLockersInUse().size());
+    }
+
+    @Test
+    void test_isTemporarilyLockedLockerNumber(){
+        Locker locker = new SmallLocker(100);
+        coinLockerSystem.getTemporarilyLockedLockers().put(locker.getId(), locker);
+
+        Assertions.assertTrue(coinLockerSystem.isTemporarilyLockedLockerNumber(100));
+        Assertions.assertFalse(coinLockerSystem.isTemporarilyLockedLockerNumber(101));
     }
 
     @Test
@@ -201,7 +199,16 @@ public class CoinLockerSystemTest {
         coinLockerSystem.getLockersInUse().put(locker.getId(), locker);
 
         doReturn("100", "1234").when(getUserInputForTest).getString();
-
         coinLockerSystem.openLocker();
+
+        locker = new SmallLocker(101);
+        locker.setPassword("1234");
+        coinLockerSystem.getLockersInUse().put(locker.getId(), locker);
+
+        doReturn("101", "1111").when(getUserInputForTest).getString();
+        coinLockerSystem.openLocker();
+        Assertions.assertEquals(locker, coinLockerSystem.getTemporarilyLockedLockers().get(locker.getId()));
+        Assertions.assertEquals(1, coinLockerSystem.getTemporarilyLockedLockers().size());
+        Assertions.assertEquals(0, coinLockerSystem.getLockersInUse().size());
     }
 }

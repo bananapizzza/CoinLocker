@@ -33,6 +33,7 @@ public class CoinLockerSystem {
     final List<Locker> mediumLockers = new ArrayList<>();
     final List<Locker> largeLockers = new ArrayList<>();
     final Map<Integer, Locker> lockersInUse = new HashMap<>();
+    final Map<Integer, Locker> temporarilyLockedLockers = new HashMap<>();
 
     @Builder(toBuilder = true)
     private CoinLockerSystem(GetUserInput getUserInput,
@@ -66,9 +67,11 @@ public class CoinLockerSystem {
                         break;
                     case 3:
                         break;
+                    default:
+                        System.err.println("Entered wrong number. Try again.");
                 }
             } catch (InvalidInputTypeException e) {
-                System.out.println("Invalid input was entered. Please try again.");
+                System.err.println("Invalid input was entered. Please try again.");
             }
         }
         getUserInput.cleanResources();
@@ -98,7 +101,7 @@ public class CoinLockerSystem {
         } catch (NoAvailableLockerException e) {
             System.out.println("No locker is available.");
         } catch (InvalidLockerSizeException e) {
-            System.out.println("Invalid locker size parameter passed.");
+            System.err.println("Invalid locker size parameter passed.");
         }
         return locker;
     }
@@ -120,11 +123,11 @@ public class CoinLockerSystem {
                 case 4:
                     throw new CancelRentingLockerException("User canceled to select locker size");
                 default:
-                    System.out.println("Wrong size. Select again.");
+                    System.err.println("Wrong size. Select again.");
                     return getLockerSize();
             }
         } catch (InvalidInputTypeException e) {
-            System.out.println("Invalid input was entered. Please try again.");
+            System.err.println("Invalid input was entered. Please try again.");
             return getLockerSize();
         }
     }
@@ -195,7 +198,7 @@ public class CoinLockerSystem {
         if (isValidPassword(password)) {
             locker.setPassword(password);
         } else {
-            System.out.println("Invalid password. Please try again.");
+            System.err.println("Invalid password. Please try again.");
             savePassword(locker);
         }
     }
@@ -227,7 +230,8 @@ public class CoinLockerSystem {
         } catch (CancelOpeningLockerException e) {
             System.out.println("Cancel opening a locker.");
         } catch (InvalidPasswordLimitReachedException e) {
-            System.out.println("You entered wrong password " + INVALID_PW_LIMIT + " times. Please contact to the office.");
+            System.err.println("You entered wrong password " + INVALID_PW_LIMIT + " times. Please contact to the office.");
+            moveLockerToLockedList(locker);
         }
     }
 
@@ -242,17 +246,22 @@ public class CoinLockerSystem {
                 lockerNum = Integer.valueOf(choice);
         }
         if (!isValidLockerNumber(lockerNum)) {
-            System.out.println("Invalid locker number.");
+            if(isTemporarilyLockedLockerNumber(lockerNum)){
+                System.err.println("This locker is temporarily locked. Please contact to the office.");
+                throw new CancelOpeningLockerException("User tried to open temporarily locked locker.");
+            }
+            System.err.println("Invalid locker number.");
             return getLockerNumber();
         }
         return lockerNum;
     }
 
     boolean isValidLockerNumber(int lockerNum) {
-        if (lockersInUse.containsKey(lockerNum)) {
-            return true;
-        }
-        return false;
+        return lockersInUse.containsKey(lockerNum);
+    }
+
+    boolean isTemporarilyLockedLockerNumber(int lockerNum) {
+        return temporarilyLockedLockers.containsKey(lockerNum);
     }
 
     Locker getInUseLocker(int lockerNum) {
@@ -268,10 +277,15 @@ public class CoinLockerSystem {
             if (password.equals(lockerPassword)) {
                 return;
             }
-            System.out.println("Password is not matched. Try again.");
+            System.err.println("Password is not matched. Try again.");
             count++;
         }
         throw new InvalidPasswordLimitReachedException("Entered password is not matched over " + INVALID_PW_LIMIT + " times.");
+    }
+
+    void moveLockerToLockedList(Locker locker) {
+        lockersInUse.remove(locker.getId());
+        temporarilyLockedLockers.put(locker.getId(), locker);
     }
 
     void returnLocker(Locker locker) {
