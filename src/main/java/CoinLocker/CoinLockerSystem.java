@@ -6,20 +6,28 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CoinLockerSystem {
 
-    final int INVALID_PW_LIMIT = 3;
+    public final int INVALID_PW_LIMIT = 3;
+    public final int SMALL_LOCKER = 1;
+    public final int MEDIUM_LOCKER = 2;
+    public final int LARGE_LOCKER = 3;
+    public final int CANCEL = 4;
     int nextId = 1;
 
     @NonNull
-    Scanner scanner;
+    GetUserInput getUserInput;
     int numberOfSmallLockers;
     int numberOfMediumLockers;
     int numberOfLargeLockers;
+
 
     final List<Locker> smallLockers = new ArrayList<>();
     final List<Locker> mediumLockers = new ArrayList<>();
@@ -27,11 +35,11 @@ public class CoinLockerSystem {
     final Map<Integer, Locker> lockersInUse = new HashMap<>();
 
     @Builder(toBuilder = true)
-    private CoinLockerSystem(Scanner scanner,
+    private CoinLockerSystem(GetUserInput getUserInput,
                              int numberOfSmallLockers,
                              int numberOfMediumLockers,
                              int numberOfLargeLockers) {
-        this.scanner = scanner;
+        this.getUserInput = getUserInput;
         this.numberOfSmallLockers = numberOfSmallLockers;
         this.numberOfMediumLockers = numberOfMediumLockers;
         this.numberOfLargeLockers = numberOfLargeLockers;
@@ -47,18 +55,23 @@ public class CoinLockerSystem {
         System.out.println("Welcome to our locker system.");
         while (choice != 3) {
             printMenu();
-            choice = scanner.nextInt();
-            switch (choice) {
-                case 1:
-                    rentLocker();
-                    break;
-                case 2:
-                    openLocker();
-                    break;
-                case 3:
-                    break;
+            try {
+                choice = getUserInput.getInt();
+                switch (choice) {
+                    case 1:
+                        rentLocker();
+                        break;
+                    case 2:
+                        openLocker();
+                        break;
+                    case 3:
+                        break;
+                }
+            } catch (InvalidInputTypeException e) {
+                System.out.println("Invalid input was entered. Please try again.");
             }
         }
+        getUserInput.cleanResources();
         System.out.println("Thank you for using our locker system.");
     }
 
@@ -69,10 +82,11 @@ public class CoinLockerSystem {
         System.out.println("3. Exit");
     }
 
-    private void rentLocker() {
+    Locker rentLocker() {
+        Locker locker = null;
         try {
             LockerSize size = getLockerSize();
-            Locker locker = getAvailableLocker(size);
+            locker = getAvailableLocker(size);
             System.out.println("Your locker number is " + locker.getId());
             System.out.println("Price is " + locker.getPrice());
             getMoney(locker.getPrice());
@@ -86,34 +100,40 @@ public class CoinLockerSystem {
         } catch (InvalidLockerSizeException e) {
             System.out.println("Invalid locker size parameter passed.");
         }
+        return locker;
     }
 
 
-    private LockerSize getLockerSize() throws CancelRentingLockerException {
+    LockerSize getLockerSize() throws CancelRentingLockerException {
         System.out.println("What size do you want?");
         printSize();
-        int input = scanner.nextInt();
-        scanner.nextLine();
-        switch (input) {
-            case 1:
-                return LockerSize.SMALL;
-            case 2:
-                return LockerSize.MEDIUM;
-            case 3:
-                return LockerSize.LARGE;
-            case 4:
-                throw new CancelRentingLockerException("User canceled to select locker size");
-            default:
-                System.out.println("Wrong size. Select again.");
-                return getLockerSize();
+        int input = 0;
+        try {
+            input = getUserInput.getInt();
+            switch (input) {
+                case 1:
+                    return LockerSize.SMALL;
+                case 2:
+                    return LockerSize.MEDIUM;
+                case 3:
+                    return LockerSize.LARGE;
+                case 4:
+                    throw new CancelRentingLockerException("User canceled to select locker size");
+                default:
+                    System.out.println("Wrong size. Select again.");
+                    return getLockerSize();
+            }
+        } catch (InvalidInputTypeException e) {
+            System.out.println("Invalid input was entered. Please try again.");
+            return getLockerSize();
         }
     }
 
     private void printSize() {
-        System.out.println("1. Small");
-        System.out.println("2. Medium");
-        System.out.println("3. Large");
-        System.out.println("4. Cancel");
+        System.out.println(SMALL_LOCKER + ". Small");
+        System.out.println(MEDIUM_LOCKER + ". Medium");
+        System.out.println(LARGE_LOCKER + ". Large");
+        System.out.println(CANCEL + ". Cancel");
     }
 
     Locker getAvailableLocker(LockerSize size) throws InvalidLockerSizeException, NoAvailableLockerException {
@@ -122,7 +142,6 @@ public class CoinLockerSystem {
             case SMALL:
                 if (smallLockers.size() > 0) {
                     locker = smallLockers.get(0);
-                    smallLockers.remove(locker);
                 } else {
                     return getAvailableLocker(LockerSize.MEDIUM);
                 }
@@ -130,7 +149,6 @@ public class CoinLockerSystem {
             case MEDIUM:
                 if (mediumLockers.size() > 0) {
                     locker = mediumLockers.get(0);
-                    mediumLockers.remove(locker);
                 } else {
                     return getAvailableLocker(LockerSize.LARGE);
                 }
@@ -138,7 +156,6 @@ public class CoinLockerSystem {
             case LARGE:
                 if (largeLockers.size() > 0) {
                     locker = largeLockers.get(0);
-                    largeLockers.remove(locker);
                 }
                 break;
             default:
@@ -154,7 +171,7 @@ public class CoinLockerSystem {
         double paid = 0;
         do {
             System.out.println("Insert " + (price - paid) + " dollars or enter # to cancel.");
-            String choice = scanner.nextLine();
+            String choice = getUserInput.getString();
             switch (choice) {
                 case "#":
                     giveChange(0, paid);
@@ -174,7 +191,7 @@ public class CoinLockerSystem {
 
     void savePassword(Locker locker) {
         System.out.println("Enter a 4-digit password for your locker");
-        String password = scanner.nextLine();
+        String password = getUserInput.getString();
         if (isValidPassword(password)) {
             locker.setPassword(password);
         } else {
@@ -190,21 +207,16 @@ public class CoinLockerSystem {
 
     void moveLockerToInUseList(Locker locker) {
         lockersInUse.put(locker.getId(), locker);
-        String lockerType = locker.getClass().getName();
-        switch (lockerType) {
-            case "SmallLocker":
-                smallLockers.remove(locker);
-                break;
-            case "MediumLocker":
-                mediumLockers.remove(locker);
-                break;
-            case "LargeLocker":
-                largeLockers.remove(locker);
-                break;
+        if (locker instanceof SmallLocker) {
+            smallLockers.remove(locker);
+        } else if (locker instanceof MediumLocker) {
+            mediumLockers.remove(locker);
+        } else if (locker instanceof LargeLocker) {
+            largeLockers.remove(locker);
         }
     }
 
-    private void openLocker() {
+    void openLocker() {
         Locker locker = null;
         try {
             int lockerNum = getLockerNumber();
@@ -215,13 +227,13 @@ public class CoinLockerSystem {
         } catch (CancelOpeningLockerException e) {
             System.out.println("Cancel opening a locker.");
         } catch (InvalidPasswordLimitReachedException e) {
-            System.out.println("You entered wrong password "+INVALID_PW_LIMIT+ " times. Please contact to the office.");
+            System.out.println("You entered wrong password " + INVALID_PW_LIMIT + " times. Please contact to the office.");
         }
     }
 
     int getLockerNumber() throws CancelOpeningLockerException {
         System.out.println("Enter your locker number or enter # to cancel.");
-        String choice = scanner.nextLine();
+        String choice = getUserInput.getString();
         int lockerNum;
         switch (choice) {
             case "#":
@@ -247,34 +259,29 @@ public class CoinLockerSystem {
         return lockersInUse.get(lockerNum);
     }
 
-    private void checkPassword(Locker locker) throws InvalidPasswordLimitReachedException {
+    void checkPassword(Locker locker) throws InvalidPasswordLimitReachedException {
         System.out.println("Enter the password for this locker");
         int count = 0;
         String lockerPassword = locker.getPassword();
         while (count < INVALID_PW_LIMIT) {
-            String password = scanner.nextLine();
+            String password = getUserInput.getString();
             if (password.equals(lockerPassword)) {
                 return;
             }
             System.out.println("Password is not matched. Try again.");
             count++;
         }
-        throw new InvalidPasswordLimitReachedException("Entered password is not matched over "+INVALID_PW_LIMIT+" times.");
+        throw new InvalidPasswordLimitReachedException("Entered password is not matched over " + INVALID_PW_LIMIT + " times.");
     }
 
-    private void returnLocker(Locker locker) {
+    void returnLocker(Locker locker) {
         lockersInUse.remove(locker.getId());
-        String lockerType = locker.getClass().getName();
-        switch (lockerType) {
-            case "SmallLocker":
-                smallLockers.add(locker);
-                break;
-            case "MediumLocker":
-                mediumLockers.add(locker);
-                break;
-            case "LargeLocker":
-                largeLockers.add(locker);
-                break;
+        if (locker instanceof SmallLocker) {
+            smallLockers.add(locker);
+        } else if (locker instanceof MediumLocker) {
+            mediumLockers.add(locker);
+        } else if (locker instanceof LargeLocker) {
+            largeLockers.add(locker);
         }
     }
 
